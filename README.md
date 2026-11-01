@@ -1,4 +1,4 @@
-# CloudShop — an agentic clothes-shopping assistant
+# CloudShop: an agentic clothes-shopping assistant
 
 **CS 619 course project.** A shopper describes what they want in plain words. Four cooperating
 agents turn that into a **checked shortlist** and an **approval-gated purchase**:
