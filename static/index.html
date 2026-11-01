@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CloudShop</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">CloudShop <span class="muted">AI personal shopper</span></div>
+  <nav class="topnav">
+    <a class="tnav active" href="/">Shop</a>
+    <a class="tnav" href="/workflow">How it works</a>
+    <a class="tnav" href="/data">Catalogue</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="pill" id="llm-pill">…</span>
+    <button class="ghost" id="reset">New chat</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Steps">
+    <button class="step" data-view="brief"><span class="dot" id="dot-brief"></span>
+      <span><b>1 · Describe</b><small>what you want</small></span></button>
+    <button class="step" data-view="discover"><span class="dot" id="dot-discover"></span>
+      <span><b>2 · Shortlist</b><small>picks for you</small></span></button>
+    <button class="step" data-view="verify"><span class="dot" id="dot-verify"></span>
+      <span><b>3 · Why these</b><small>the evidence</small></span></button>
+    <button class="step" data-view="checkout"><span class="dot" id="dot-checkout"></span>
+      <span><b>4 · Checkout</b><small>review &amp; pay</small></span></button>
+    <div class="catalog-box">
+      <b>Shopping from</b>
+      <div class="store-badge"><span id="catalog-source">CloudShop Marketplace</span></div>
+      <small class="muted">A synthetic storefront standing in for real online stores, swappable for a
+        real retailer's product feed in a licensed deployment.</small>
+    </div>
+    <div class="cart-mini" id="cart-mini"></div>
+  </nav>
+
+  <main id="main">
+    <!-- 1. Describe -->
+    <section class="view" id="view-brief">
+      <div class="hero">
+        <h1>What are you shopping for?</h1>
+        <p class="lede">Just talk to it. Tell CloudShop the occasion, the vibe, the mood, even the messy
+          bits ("clubby but comfy, dark not black, no sequins"). It finds matches, shows you <em>why</em>
+          each fits, lets you curate the cart by chat, and only buys once you approve.</p>
+        <div class="composer">
+          <textarea id="intake-text" rows="2" placeholder="e.g. party tomorrow, clubby but comfy, dark not black, and I hate sequins"></textarea>
+          <button class="primary" id="intake-go">Ask CloudShop</button>
+        </div>
+        <div class="suggest-label muted">Try one of these ↓</div>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+
+      <div id="brief-area" hidden>
+        <p class="summary" id="brief-summary"></p>
+        <div id="clarifications"></div>
+        <h2>Your request <span class="legend"><i class="src stated"></i>you said <i class="src inferred"></i>AI inferred <i class="src edited"></i>you edited</span></h2>
+        <form id="brief-form" class="brief-grid"></form>
+        <div class="actions">
+          <button class="ghost" id="brief-save">Save edits</button>
+          <button class="primary" id="to-discover">Looks right → find it</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Shortlist -->
+    <section class="view" id="view-discover" hidden>
+      <h1>Picks for you</h1>
+      <p class="muted">Each pick is checked against your request and the product data. Open a card's checklist to see the evidence.</p>
+      <div class="toolbar">
+        <label><input type="checkbox" id="show-failed"> Show items that failed checks</label>
+        <div class="refine">
+          <input id="feedback" placeholder="Not quite? e.g. 'more colourful', 'cheaper', 'less formal'">
+          <button class="ghost" id="refine-go">Try again</button>
+        </div>
+      </div>
+      <div class="grid" id="product-grid"></div>
+    </section>
+
+    <!-- 3. Why these -->
+    <section class="view" id="view-verify" hidden>
+      <h1>Why these picks</h1>
+      <p class="muted">Every recommendation, checked against your request and the raw product record.</p>
+      <div id="verify-table"></div>
+    </section>
+
+    <!-- 4. Checkout -->
+    <section class="view" id="view-checkout" hidden>
+      <h1>Checkout</h1>
+      <div class="checkout-cols">
+        <div>
+          <h2>Your bag</h2>
+          <div id="cart-list"></div>
+          <h2>Spending rules</h2>
+          <label class="field">Spending cap (CloudShop can't go over this without asking again)
+            <input type="number" id="cap" min="0" step="1" placeholder="e.g. 150"></label>
+          <label class="field" id="pay-method-field">Payment method
+            <select id="pay-method"></select></label>
+          <button class="primary" id="plan-go">Review before paying</button>
+        </div>
+        <div id="plan-area"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Floating corner chat: the one chat thread that drives the flow, tucked into the bottom-right. -->
+<div id="chat-widget" hidden>
+  <section id="chat-panel" aria-label="Chat with CloudShop" hidden>
+    <header class="chat-head">
+      <span class="chat-title">CloudShop</span>
+      <button class="chat-min" id="chat-min" aria-label="Minimise chat" title="Minimise">–</button>
+    </header>
+    <div class="chat-log" id="chat-log"></div>
+    <div class="chat-input">
+      <input id="chat-text" placeholder="Reply… “add the dress”, “anything cheaper?”, “checkout”">
+      <button class="primary" id="chat-send">Send</button>
+    </div>
+  </section>
+  <button id="chat-launch" aria-label="Open chat">
+    <span class="cl-ic">💬</span><span class="cl-text">Chat</span>
+    <span class="cl-badge" id="chat-badge" hidden></span>
+  </button>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="busy" id="busy" hidden><div class="spinner"></div><span id="busy-text">Thinking…</span></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

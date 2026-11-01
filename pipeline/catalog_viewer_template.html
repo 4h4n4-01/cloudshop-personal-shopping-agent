@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudShop · Catalogue</title>
+<style>
+  :root{--bg:#faf8f6;--panel:#fff;--ink:#20242c;--muted:#8a8f99;--line:#ece9e5;--accent:#20242c;--sale:#c0392b;--ok:#2d7d55;}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1117;--panel:#171a22;--ink:#e7e9ee;--muted:#9aa2b1;--line:#262b36;--accent:#e7e9ee;--sale:#e5736a;--ok:#5bbd8a;}}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;background:var(--panel);position:sticky;top:0;z-index:5}
+  header h1{font-family:Georgia,'Times New Roman',serif;font-size:20px;margin:0;font-weight:600;letter-spacing:.015em}
+  header .sub{color:var(--muted);font-size:13px}
+  .count{margin-left:auto;font-weight:650}
+  .count b{color:var(--accent)}
+  .wrap{display:grid;grid-template-columns:270px 1fr}
+  @media (max-width:760px){.wrap{grid-template-columns:1fr}}
+  aside{position:sticky;top:53px;align-self:start;padding:14px 16px;border-right:1px solid var(--line);background:var(--panel);max-height:calc(100vh - 53px);overflow:auto}
+  aside h3{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  aside h3:first-child{margin-top:0}
+  input[type=search],select{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);cursor:pointer;font-size:12px;user-select:none;display:inline-flex;align-items:center;gap:5px}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+  .chip .sw{width:11px;height:11px;border-radius:50%;border:1px solid #0002}
+  .multi{max-height:148px;overflow:auto;padding-right:2px}
+  .range{display:flex;align-items:center;gap:8px;margin-top:4px}
+  .range input[type=range]{flex:1}
+  .rangeval{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+  .toggles label{display:flex;gap:8px;align-items:center;padding:3px 0;cursor:pointer}
+  button.reset{margin-top:14px;width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
+  main{padding:22px 26px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:30px 22px}
+  .card{display:flex;flex-direction:column;cursor:default;transition:transform .16s ease}
+  .card:hover{transform:translateY(-3px)}
+  .card:hover .thumb{box-shadow:0 14px 28px rgba(0,0,0,.12)}
+  .card.oos{opacity:.6}
+  .thumb{aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:62px;position:relative;border-radius:3px;transition:box-shadow .16s ease}
+  .flag{position:absolute;top:10px;font-size:9.5px;font-weight:600;letter-spacing:.04em;padding:3px 8px;border-radius:2px;text-transform:uppercase}
+  .flag.badge{left:10px;background:#111;color:#fff}
+  .flag.sale{right:10px;background:var(--sale);color:#fff}
+  .flag.sold{left:10px;background:#fff;color:#111;border:1px solid #0002}
+  .swatches{position:absolute;bottom:10px;left:10px;display:flex;align-items:center;gap:5px}
+  .swatches i{width:13px;height:13px;border-radius:50%;border:1px solid #00000022;box-shadow:0 0 0 1.5px #ffffffcc}
+  .swatches .cc{font-size:10px;color:#333;background:#ffffffd0;border-radius:9px;padding:0 5px;line-height:15px}
+  .info{padding:12px 2px 2px}
+  .brand{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .title{font-size:13.5px;margin:4px 0 6px;line-height:1.32;color:var(--ink)}
+  .rating{font-size:11px;color:var(--muted);margin-bottom:6px}
+  .rating .stars{color:#d9a400;letter-spacing:1.5px}
+  .price{font-size:14.5px;font-weight:600;color:var(--ink)}
+  .price.onsale .now{color:var(--sale)}
+  .price .was{color:var(--muted);text-decoration:line-through;font-weight:400;margin-left:7px;font-size:12.5px}
+  .ship{font-size:10.5px;color:var(--ok);margin-top:5px}
+  .more{grid-column:1/-1;text-align:center;color:var(--muted);padding:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>CloudShop · Catalogue</h1>
+  <span class="sub" id="sub">a prototype catalogue, emoji stand in for product photos</span>
+  <span class="count"><b id="shown">0</b> of <span id="total">0</span> items</span>
+</header>
+<div class="wrap">
+  <aside id="panel">
+    <h3>Search</h3>
+    <input type="search" id="q" placeholder="name, brand or store…">
+    <div id="filters"></div>
+    <h3>Price (S$)</h3>
+    <div class="range"><input type="range" id="pmin"><span class="rangeval" id="pminv"></span></div>
+    <div class="range"><input type="range" id="pmax"><span class="rangeval" id="pmaxv"></span></div>
+    <h3>Min rating</h3>
+    <div class="range"><input type="range" id="rmin" min="0" max="5" step="0.1" value="0"><span class="rangeval" id="rminv">0.0★</span></div>
+    <h3>Show only</h3>
+    <div class="toggles">
+      <label><input type="checkbox" id="instock"> In stock</label>
+      <label><input type="checkbox" id="sale"> On sale</label>
+      <label><input type="checkbox" id="ship"> Free shipping</label>
+      <label><input type="checkbox" id="badge"> Has badge</label>
+    </div>
+    <h3>Sort</h3>
+    <select id="sort">
+      <option value="name">Name A–Z</option>
+      <option value="price">Price: low → high</option>
+      <option value="-price">Price: high → low</option>
+      <option value="-rating">Rating: high → low</option>
+    </select>
+    <button class="reset" id="reset">Reset all filters</button>
+  </aside>
+  <main><div id="out" class="grid"><div class="more">Loading…</div></div></main>
+</div>
+<script>
+// Registered before the main script so it surfaces any error (incl. a parse error) on the page
+// instead of a silent "Loading…". If this handler itself never fires but the page stays blank, the
+// script was blocked entirely, that happens in an editor PREVIEW PANE; open the file in a real browser.
+window.addEventListener('error', function(ev){
+  var o=document.getElementById('out');
+  if(o) o.innerHTML='<div class="more" style="color:#d1465b">Could not run the page: '+
+    (ev.message||ev.error||'script blocked')+'<br><br>If you opened this inside an editor preview pane, '+
+    'open the file in a real web browser (Chrome / Edge) instead, double-click it in File Explorer.</div>';
+});
+</script>
+<script>
+let EMBEDDED = __CATALOG_DATA__;   // gold writes the data here; the server leaves it null (then we fetch)
+let DATA=[];
+const CAP=600;
+const SWATCH={black:'#222',white:'#fff',grey:'#9ca3af',navy:'#24365c',blue:'#3b82f6',beige:'#d8c9a8',
+  cream:'#efe7d3',brown:'#8a5a34',green:'#4b8a56',olive:'#808000',red:'#d1465b',pink:'#f0a8c4',burgundy:'#6d1f33',yellow:'#e3b63a'};
+const TINT={black:'#e5e7eb',white:'#f3f4f6',grey:'#e5e7eb',navy:'#dbe4f2',blue:'#dbeafe',beige:'#f1ead9',
+  cream:'#faf6ec',brown:'#e9ddce',green:'#dceddc',olive:'#e6e9d4',red:'#fadbdb',pink:'#fbe0ea',burgundy:'#f0d9df',yellow:'#f8efcf'};
+// filter spec: t = chips(single) | multi(set, scalar) | arr(set, array field) | select(dropdown)
+const FIELDS=[
+ {k:'department',label:'Department',t:'chips'},
+ {k:'section',label:'Section',t:'chips'},
+ {k:'category',label:'Category',t:'multi'},
+ {k:'colors',label:'Colour',t:'arr'},
+ {k:'silhouette',label:'Silhouette / style',t:'select'},
+ {k:'pattern',label:'Pattern',t:'select'},
+ {k:'sleeve_length',label:'Sleeve',t:'select'},
+ {k:'neckline',label:'Neckline',t:'select'},
+ {k:'fit',label:'Fit',t:'select'},
+ {k:'hem_length',label:'Hem length',t:'select'},
+ {k:'rise',label:'Rise',t:'select'},
+ {k:'heel_height',label:'Heel height',t:'select'},
+ {k:'occasions',label:'Occasion',t:'arr'},
+ {k:'materials',label:'Material',t:'arr'},
+];
+let F={q:'',pmin:0,pmax:0,rmin:0,instock:false,sale:false,ship:false,badge:false,sort:'name'};
+const $=s=>document.querySelector(s);
+const money=n=>'S$'+Number(n).toFixed(2);
+const vals=f=> f.t==='arr'
+  ? [...new Set(DATA.flatMap(p=>p[f.k]||[]))].sort()
+  : [...new Set(DATA.map(p=>p[f.k]).filter(v=>v!==''&&v!=null))].sort();
+
+function buildPanel(){
+  const host=$('#filters'); host.innerHTML='';
+  for(const f of FIELDS){
+    const v=vals(f); if(!v.length) continue;
+    const h=document.createElement('h3'); h.textContent=f.label; host.appendChild(h);
+    if(f.t==='select'){
+      F[f.k]='';
+      const s=document.createElement('select');
+      s.innerHTML=`<option value="">Any ${f.label.toLowerCase()}</option>`+v.map(x=>`<option>${x}</option>`).join('');
+      s.onchange=e=>{F[f.k]=e.target.value;render()};
+      host.appendChild(s);
+    } else if(f.t==='chips'){
+      F[f.k]='';
+      const box=document.createElement('div'); box.className='chips';
+      box.innerHTML=['All',...v].map(x=>`<span class="chip${x==='All'?' on':''}" data-v="${x==='All'?'':x}">${x}</span>`).join('');
+      box.onclick=e=>{const c=e.target.closest('.chip'); if(!c)return;
+        box.querySelectorAll('.chip').forEach(z=>z.classList.remove('on')); c.classList.add('on'); F[f.k]=c.dataset.v; render()};
+      host.appendChild(box);
+    } else { // multi / arr -> multi-select toggle chips
+      F[f.k]=new Set();
+      const box=document.createElement('div'); box.className='chips multi';
+      box.innerHTML=v.map(x=>{
+        const sw=f.k==='colors'?`<span class="sw" style="background:${SWATCH[x]||'#bbb'}"></span>`:'';
+        return `<span class="chip" data-v="${x}">${sw}${x}</span>`;}).join('');
+      box.onclick=e=>{const c=e.target.closest('.chip'); if(!c)return;
+        c.classList.toggle('on'); const set=F[f.k]; const val=c.dataset.v;
+        c.classList.contains('on')?set.add(val):set.delete(val); render()};
+      host.appendChild(box);
+    }
+  }
+}
+
+function match(p){
+  if(F.q && !(p.name+' '+p.brand+' '+(p.store||'')).toLowerCase().includes(F.q)) return false;
+  for(const f of FIELDS){
+    const cur=F[f.k];
+    if(f.t==='select'||f.t==='chips'){ if(cur && p[f.k]!==cur) return false; }
+    else if(f.t==='multi'){ if(cur.size && !cur.has(p[f.k])) return false; }
+    else { if(cur.size && !(p[f.k]||[]).some(x=>cur.has(x))) return false; }
+  }
+  if(p.price<F.pmin||p.price>F.pmax) return false;
+  if((p.rating||0)<F.rmin) return false;
+  if(F.instock&&!p.in_stock) return false;
+  if(F.sale&&!p.original_price) return false;
+  if(F.ship&&!p.free_shipping) return false;
+  if(F.badge&&!(p.badges&&p.badges.length)) return false;
+  return true;
+}
+
+function render(){
+  $('#pminv').textContent=money(F.pmin); $('#pmaxv').textContent=money(F.pmax);
+  let items=DATA.filter(match);
+  const [k,desc]=F.sort[0]==='-'?[F.sort.slice(1),true]:[F.sort,false];
+  items.sort((a,b)=>{const x=a[k],y=b[k],c=(x>y)-(x<y);return desc?-c:c});
+  $('#shown').textContent=items.length;
+  const slice=items.slice(0,CAP);
+  $('#out').innerHTML = slice.map(card).join('') +
+    (items.length>CAP?`<div class="more">Showing first ${CAP} of ${items.length}, narrow the filters to see the rest.</div>`:'')
+    || '<div class="more">No items match these filters.</div>';
+}
+
+function card(p){
+  const tint=TINT[(p.colors||[])[0]]||'#f1efec', badge=(p.badges||[])[0];
+  const off=p.original_price?Math.round(100*(1-p.price/p.original_price)):0;
+  const r=Math.round(p.rating||0), stars='★'.repeat(r)+'☆'.repeat(5-r);
+  const cols=p.colors||[];
+  const dots=cols.slice(0,4).map(c=>`<i title="${c}" style="background:${SWATCH[c]||'#bbb'}"></i>`).join('')
+    +(cols.length>4?`<span class="cc">+${cols.length-4}</span>`:'');
+  return `<article class="card${p.in_stock?'':' oos'}">
+    <div class="thumb" style="background:${tint}"><span>${p.emoji||'🛍️'}</span>
+      ${badge?`<span class="flag badge">${badge}</span>`:(p.in_stock?'':`<span class="flag sold">Sold out</span>`)}
+      ${off?`<span class="flag sale">-${off}%</span>`:''}
+      ${dots?`<div class="swatches">${dots}</div>`:''}
+    </div>
+    <div class="info">
+      <div class="brand">${p.brand||p.store||''}</div>
+      <div class="title">${p.name}</div>
+      ${p.rating?`<div class="rating"><span class="stars">${stars}</span> ${p.rating} (${p.review_count})</div>`:''}
+      <div class="price${p.original_price?' onsale':''}"><span class="now">${money(p.price)}</span>${p.original_price?`<span class="was">${money(p.original_price)}</span>`:''}</div>
+      ${p.free_shipping?`<div class="ship">Free shipping</div>`:''}
+    </div>
+  </article>`;
+}
+
+function init(){
+  $('#total').textContent=DATA.length;
+  $('#sub').textContent=(EMBEDDED?'Offline snapshot, ':'')+'a prototype catalogue; emoji stand in for product photos';
+  const prices=DATA.map(p=>p.price),lo=Math.floor(Math.min(...prices)),hi=Math.ceil(Math.max(...prices));
+  F.pmin=lo;F.pmax=hi;
+  for(const el of ['pmin','pmax']){$('#'+el).min=lo;$('#'+el).max=hi;$('#'+el).value=F[el]}
+  buildPanel();
+  $('#q').oninput=e=>{F.q=e.target.value.toLowerCase();render()};
+  $('#sort').onchange=e=>{F.sort=e.target.value;render()};
+  $('#pmin').oninput=e=>{F.pmin=+e.target.value;render()};
+  $('#pmax').oninput=e=>{F.pmax=+e.target.value;render()};
+  $('#rmin').oninput=e=>{F.rmin=+e.target.value;$('#rminv').textContent=F.rmin.toFixed(1)+'★';render()};
+  for(const id of ['instock','sale','ship','badge'])$('#'+id).onchange=e=>{F[id]=e.target.checked;render()};
+  $('#reset').onclick=()=>location.reload();
+  render();
+}
+
+(EMBEDDED ? Promise.resolve(EMBEDDED) : fetch('/api/catalog/all').then(r=>r.json()))
+  .then(d=>{DATA=d; init();})
+  .catch(e=>{$('#out').innerHTML='<div class="more" style="color:#d1465b">Could not load the catalogue: '+e+'</div>';});
+</script>
+</body>
+</html>
